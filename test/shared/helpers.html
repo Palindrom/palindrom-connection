@@ -1,0 +1,55 @@
+<!-- mock server responses -->
+<script src="../../../sinonjs/sinon.js"></script>
+<script src="mockServer.js"></script>
+<script src="../../../fast-json-patch/dist/fast-json-patch.min.js"></script>
+
+<script>
+    window.operationObject = function (op, path, value) {
+        var o = {
+            op: op,
+            path: path
+        };
+        if (arguments.length > 2) {
+            o.value = value;
+        }
+        return o;
+    };
+    window.domBindFixture = function (id, done, where) {
+        var fixture = document.getElementById(id).content;
+        var templ = document.importNode(fixture, true);
+        var domBind = templ.querySelector('[is="dom-bind"]');
+        domBind.addEventListener('dom-change', function () {
+            setTimeout(function () {
+                done();
+            });
+        });
+        (where || document.body).appendChild(domBind);
+        return domBind;
+    };
+    var currentVersion;
+    window.initPalindrom = function (palindrom, model) {
+        currentVersion = 1;
+        setMockServerModel(model);
+        disableMockServerReplies();
+        palindromChange(palindrom, [operationObject('replace', '', model)]);
+    };
+    window.palindromChange = function (palindrom, sequence) {
+        palindrom.handleRemoteChange(preparePatchFromMockServer(sequence), '', '');
+    };
+    window.palindromChaiPlugin = function (chai, utils) {
+        chai.Assertion.addMethod('calledWithPatch', function (op) {
+            // first arg is event, first two operations are OT-related
+            const data = JSON.parse(this._obj.firstCall.args[0].detail.data)[2];
+            this.assert(this._obj.called
+                && utils.eql(data, op),
+                "expected a spy to have been called with patch #{exp}, but it was not",
+                "expected a spy to not have been called with patch #{exp}, but it has been",
+                op);
+        });
+        chai.Assertion.addProperty('visible', function () {
+            this.assert(this._obj.offsetWidth || this._obj.offsetHeight || this._obj.getClientRects().length,
+                "expected element #{this} to be visible, but it's hidden",
+                "expected element #{this} to be hidden, but it's visible");
+        })
+    };
+</script>

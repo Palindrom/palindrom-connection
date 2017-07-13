@@ -1,0 +1,49 @@
+{
+  "name": "palindrom-connection",
+  "version": "0.0.0",
+  "description": "Initiates a Palindrom connection a offers a DOM interface to access the connection via DOM events.",
+  "private": true,
+  "authors": [
+    "Omar Alshaker",
+    "Tomek Wytrębowicz"
+  ],
+  "keywords": [
+    "web-components",
+    "polymer",
+    "json-patch",
+    "palindrom",
+    "binding",
+    "template",
+    "web-socket",
+    "http",
+    "json"
+  ],
+  "main": "palindrom-connection.html",
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/Palindrom/palindrom-connection.git"
+  },
+  "license": "MIT",
+  "homepage": "https://github.com/Palindrom/palindrom-connection",
+  "ignore": [
+    "**/.*",
+    "node_modules",
+    "bower_components",
+    "test/",
+    "demo/",
+    "Gruntfile.js"
+  ],
+  "dependencies": {
+    "Palindrom": "Palindrom/Palindrom#^v3.0.0"
+  },
+  "devDependencies": {
+    "web-component-tester": "^4.0.0",
+    "webcomponentsjs": "webcomponents/webcomponentsjs#^0.7.0",
+    "jasmine-core": "jasmine#^2.4.1",
+    "jasmine-ajax": "^3.2.0",
+    "fast-json-patch": "Starcounter-jack/JSON-Patch#^2.0.0"
+  },
+  "resolutions": {
+    "chai": "^3.2.0"
+  }
+}

@@ -1,0 +1,270 @@
+<!-- include Palindrom with dependencies -->
+<script src="../Palindrom/dist/palindrom-dom.js"></script>
+<dom-module id="palindrom-connection">
+    <template id="palindrom-connection-template">
+        <style>
+            .box-container {
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100%;
+                display: flex;
+                justify-content: center;
+                z-index: 1000;
+            }
+
+            .box-container[hidden] {
+                display: none;
+            }
+
+            .box-container div {
+                width: 50%;
+                border-radius: 0 0 10px 10px;
+                border: thin solid;
+                border-top: none;
+                text-align: center;
+                padding: 5px 0;
+                cursor: pointer;
+                text-decoration: underline;
+            }
+
+            @media only screen and (max-width: 640px) {
+                .box {
+                    width: 100%;
+                }
+            }
+
+            .notice {
+                background-color: #fff4cc;
+                border-color: #ffe070;
+                color: #000;
+            }
+
+            .error {
+                background-color: #DB0F13;
+                border-color: #A11517;
+                color: #FFFFFF;
+            }
+        </style>
+        <div class="box-container" hidden>
+            <div id='reconnection-box'></div>
+        </div>
+    </template>
+    <script>
+        class PalindromConnection extends HTMLElement {
+
+            connectedCallback() {
+
+                const templ = (document._currentScript || document.currentScript).ownerDocument.getElementById("palindrom-connection-template");
+                const clone = document.importNode(templ.content, true);
+                if (this.attachShadow) {
+                    this.root = this.attachShadow({ mode: "open" });
+
+                } else {
+                    this.shadowRootshadowRoot = this.createShadowRoot();
+                }
+                this.root.appendChild(clone);
+
+                this.reconnectionBox = this.root.querySelector('#reconnection-box');
+
+                this.remoteUrl = this.getAttribute('remote-url');
+                this.useWebSocket = this.getAttribute('use-websocket') !== 'false';
+                this.debug = !!this.getAttribute('debug');
+                this.localVersionPath = this.getAttribute('local-version-patch') || '/_ver#c$';
+                this.remoteVersionPath = this.getAttribute('local-version-patch') || '/_ver#s';
+                this.ot = !!this.getAttribute('ot') || true;
+                this.purity = !!this.getAttribute('purity');
+                this.listenTo = this.getAttribute('listen-to') || undefined; /* the || is to avoid empty strings */
+                this.pingIntervalS = (this.getAttribute('ping-interval-s') && parseInt(this.getAttribute('ping-interval-s'))) || 60;
+                this.palindromObj = {};
+                this.path = this.getAttribute('path') || '/';
+
+                const whereToBind = this.getAttribute("ref");
+
+                if (this.listenTo) {
+                    this.listenTo = typeof listenTo == "string" ? document.getElementById(listenTo) : listenTo;
+                }
+
+                this.palindrom = new PalindromDOM({
+                    remoteUrl: this.remoteUrl,
+                    pingIntervalS: this.pingIntervalS,
+                    listenTo: this.listenTo,
+                    useWebSocket: this.useWebSocket,
+                    debug: this.debug,
+                    onLocalChange: this.onLocalChange.bind(this),
+                    onRemoteChange: this.onPatchApplied.bind(this),
+                    onPatchReceived: this.onPatchReceived.bind(this),
+                    onPatchSent: this.onPatchSent.bind(this),
+                    onSocketStateChanged: this.onSocketStateChanged.bind(this),
+                    onConnectionError: this.onConnectionError.bind(this),
+                    onReconnectionCountdown: this.onReconnectionCountdown.bind(this),
+                    onReconnectionEnd: this.onReconnectionEnd.bind(this),
+                    localVersionPath: this.localVersionPath,
+                    remoteVersionPath: this.remoteVersionPath,
+                    ot: this.ot,
+                    purity: this.purity,
+                    onStateReset: this.onStateReset.bind(this)
+                });
+                this.network = this.palindrom.network;
+                this.morphUrl = this.palindrom.morphUrl.bind(this.palindrom);
+            }
+            reconnectNow() {
+                this.palindrom.reconnectNow();
+            }
+            reload() {
+                window.location.reload();
+            }
+            onStateReset(newState) {
+                this.dispatchEvent(new CustomEvent("state-reset", {
+                    bubbles: true,
+                    cancelable: true,
+                    detail: newState
+                }));
+                this.obj = newState;
+            }
+            onLocalChange(patch) {
+                this.dispatchEvent(new CustomEvent("local-change", {
+                    bubbles: true,
+                    cancelable: true,
+                    detail: patch
+                }));
+            }
+            onPatchReceived(data, url, method) {
+                this.dispatchEvent(new CustomEvent("patch-received", {
+                    bubbles: true,
+                    cancelable: true,
+                    detail: data
+                }));
+            }
+            onPatchSent(data, url, method) {
+                const detail = {
+                    data: data,
+                    url: url,
+                    method: method
+                }
+                this.dispatchEvent(new CustomEvent("patch-sent", {
+                    bubbles: true,
+                    cancelable: true,
+                    detail
+                }));
+            }
+            onSocketStateChanged(state, url, data, code, reason) {
+                const detail = {
+                    state: state,
+                    url: url,
+                    data: data,
+                    statusCode: code,
+                    reason: reason
+                };
+                this.dispatchEvent(new CustomEvent("socket-state-changed", {
+                    bubbles: true,
+                    cancelable: true,
+                    detail
+                }));
+            }
+            onConnectionError(data, url, method) {
+                var detail = {
+                    data: data,
+                    url: url,
+                    method: method,
+                    handled: false
+                };
+
+                this.dispatchEvent(new CustomEvent("reconnection-countdown", {
+                    bubbles: true,
+                    cancelable: true,
+                    detail
+                }));
+
+                if (!detail.handled) {
+                    if (window.console && window.console.error) {
+                        var str = "Connection error: ";
+
+                        if (detail.data.statusText) {
+                            str += detail.data.statusText + " ";
+                        }
+
+                        if (detail.data.statusCode) {
+                            str += "(" + detail.data.statusCode + ") ";
+                        }
+
+                        str += "\n\n";
+
+                        if (detail.method) {
+                            str += detail.method + " ";
+                        }
+
+                        if (detail.url) {
+                            str += detail.url;
+                        }
+
+                        if (detail.data.reason) {
+                            str += "\n\n" + detail.data.reason;
+                        }
+
+                        console.error(str);
+                    }
+                    this.updateReconnectionBox(false, true);
+                }
+            }
+            onReconnectionCountdown(milliseconds) {
+                const detail = {
+                    milliseconds,
+                    handled: false
+                };
+                this.dispatchEvent(new CustomEvent("reconnection-countdown", {
+                    bubbles: true,
+                    cancelable: true,
+                    detail
+                }));
+                if (!detail.handled) {
+                    this.updateReconnectionBox(false, false, milliseconds / 1000);
+                }
+            }
+            updateReconnectionBox(hide, error, seconds) {
+                if (hide) {
+                    this.reconnectionBox.parentElement.setAttribute('hidden', true);
+                    return;
+                }
+                this.reconnectionBox.parentElement.removeAttribute('hidden');
+                if (error) {
+                    this.reconnectionBox.className = 'error';
+                    this.reconnectionBox.innerHTML = '<strong>Connection error.</strong> See console for details. <span>Click here to reload</span>';
+                    this.reconnectionBox.onclick = this.reload.bind(this);
+                } else if (seconds !== 0) {
+                    this.reconnectionBox.className = 'notice';
+                    this.reconnectionBox.innerHTML = `<strong>Not connected.</strong> Connecting in ${seconds} seconds... <span>Retry now</span></div>`;
+                    this.reconnectionBox.onclick = this.reconnectNow.bind(this);
+                }
+                else if (seconds === 0) {
+                    this.reconnectionBox.className = 'notice';
+                    this.reconnectionBox.innerHTML = `<strong>Connecting now...</strong>`;
+                    delete this.reconnectionBox.onclick;
+                }
+            }
+            onReconnectionEnd() {
+                const detail = {
+                    handled: false
+                };
+                this.dispatchEvent(new CustomEvent("reconnection-end", {
+                    bubbles: true,
+                    cancelable: true,
+                    detail
+                }));
+                if (!detail.handled) {
+                    this.updateReconnectionBox(true);
+                }
+            }
+            onPatchApplied(patch, results) {
+                this.dispatchEvent(new CustomEvent("patch-applied", {
+                    bubbles: true,
+                    cancelable: true,
+                    detail: { patch, results }
+                }));
+            }
+        }
+        customElements.define('palindrom-connection',
+            PalindromConnection
+        );
+    </script>
+</dom-module>

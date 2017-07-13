@@ -1,0 +1,106 @@
+<html>
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, minimum-scale=1.0, initial-scale=1.0, user-scalable=yes">
+
+    <!-- Importing Web Component's Polyfill -->
+    <script src="../../../webcomponentsjs/webcomponents-lite.js"></script>
+    <link rel="import" href="../shared/helpers.html">
+    <script src="../../../web-component-tester/browser.js"></script>
+
+    <!-- Step 1: import the element to test -->
+    <link rel="import" href="../../palindrom-connection.html">
+</head>
+
+<body>
+    <palindrom-connection remote-url="/palindrom" ping-interval-s="0"></palindrom-connection>
+    <script>
+        var model = {
+            name: "Juicy"
+        };
+        chai.use(palindromChaiPlugin);
+
+        var currentObject;
+        var stateResetListener = sinon.spy();
+        var palindromConnection = document.querySelector('palindrom-connection');
+        var palindrom = palindromConnection.palindrom;
+
+        describe('state-reset event', function () {
+            it('fire a state-reset event in the beginning', function () {
+                palindromConnection.addEventListener("state-reset", stateResetListener);
+                initPalindrom(palindrom, model);
+                expect(stateResetListener).to.have.been.called;
+                expect(stateResetListener.getCall(0).args[0].detail).to.deep.equal(model);
+                currentObject = stateResetListener.getCall(0).args[0].detail;
+
+            });
+            it('fire a state-reset event when a root patch arrives', function () {
+                palindromChange(palindrom, [operationObject('replace', '', model)]);
+                expect(stateResetListener).to.have.been.calledTwice;
+                expect(stateResetListener.getCall(1).args[0].detail).to.deep.equal(model);
+                currentObject = stateResetListener.getCall(1).args[0].detail;
+            });
+        });
+        describe('patch-received event', function () {
+            it('fire patch-received when a patch is received', function () {
+                const patchReceivedListener = sinon.spy();
+                palindromConnection.addEventListener("patch-received", patchReceivedListener);
+
+                palindromChange(palindrom, [operationObject('replace', '/name', 'Frédéric')]);
+
+                expect(patchReceivedListener).to.have.been.called;
+
+                const patch = patchReceivedListener.getCall(0).args[0].detail;
+                // first two are OT 
+                expect(patch[2]).to.deep.equal(operationObject('replace', '/name', 'Frédéric'));
+            });
+        });
+        describe('patch-applied event', function () {
+            it('fire patchApplied when a patch is applied', function () {
+                const patchAppliedListener = sinon.spy();
+                palindromConnection.addEventListener("patch-applied", patchAppliedListener);
+
+                palindromChange(palindrom, [operationObject('replace', '/name', 'Chopin')]);
+
+                expect(patchAppliedListener).to.have.been.called;
+
+                const detail = patchAppliedListener.getCall(0).args[0].detail;
+                const patch = detail.patch;
+                const results = detail.results;
+
+                expect(patch).to.deep.equal([operationObject('replace', '/name', 'Chopin')]);
+                expect(results[0].removed).to.equal('Frédéric');
+            });
+        });
+        describe('patch-sent event', function () {
+            it('fire patch-sent when a patch is issued', function () {
+                const patchSentListener = sinon.spy();
+                palindromConnection.addEventListener("patch-sent", patchSentListener);
+
+                currentObject.name = 'Arnold';
+
+                expect(patchSentListener).to.have.been.called;
+                
+                expect(patchSentListener).to.have.been.calledWithPatch(operationObject("replace", "/name", "Arnold"));
+            });
+        });
+        describe('local-change event', function () {
+            it('fire patch-sent when a patch is issued', function () {
+                const localChangeListener = sinon.spy();
+                palindromConnection.addEventListener("local-change", localChangeListener);
+
+                currentObject.name = 'Amy';
+
+                expect(localChangeListener).to.have.been.called;
+
+                const detail = localChangeListener.getCall(0).args[0].detail;
+                expect(detail).to.deep.equal([operationObject("replace", "/name", "Amy")]);
+            });
+        });
+
+    </script>
+
+</body>
+
+</html>
