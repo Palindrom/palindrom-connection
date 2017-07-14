@@ -59,10 +59,17 @@
             this.root.appendChild(clone);
 
             this.reconnectionBox = this.root.querySelector('#reconnection-box');
-            
+
             // in case of having two Palindrom apps blended in the same page, events will collide, a prefix might be needed
 
-            this.eventPrefix = this.getAttribute('event-prefix') || '';
+            this.eventPrefix = this.getAttribute('event-prefix') || '';            
+            if (!this.eventPrefix) {
+                const count = document.getElementsByTagName('palindrom-connection').length;
+                // there is another instance of `palindrom-connection`
+                if (count > 1) {
+                    console.warn('It seems like you have more than one <palindrom-connection/> instance in your document. This could lead to events collision without event-prefix attribute, please prefix your event-names by setting `event-prefix` attribute, eg: `<palindrom-connection event-prefix="your-custom-prefix" />` and use the same prefix when subscribing to the events');
+                }
+            }
             this.remoteUrl = this.getAttribute('remote-url');
             this.useWebSocket = this.getAttribute('use-websocket') !== 'false';
             this.debug = !!this.getAttribute('debug');
