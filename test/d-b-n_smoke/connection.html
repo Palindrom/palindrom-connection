@@ -30,9 +30,15 @@
             var stateResetListener = sinon.spy();
             var palindromConnection = document.querySelector('palindrom-connection');
             const palindromConnectionSR = palindromConnection.shadowRoot;
-            var palindrom = palindromConnection.palindrom;
+            var palindrom;
             var consoleErrorSpy;
             describe('Connection events', function () {
+                before(done => { // wait for Palindrom to connect
+                    setTimeout(() => {
+                        palindrom = palindromConnection.palindrom;
+                        done();
+                    }, 100)
+                })
                 beforeEach(function () {
                     consoleErrorSpy = sinon.spy(console, 'error');
                 });
