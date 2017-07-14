@@ -1,0 +1,66 @@
+<html>
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, minimum-scale=1.0, initial-scale=1.0, user-scalable=yes">
+
+    <!-- Importing Web Component's Polyfill -->
+    <script src="../../../webcomponentsjs/webcomponents.js"></script>
+    <link rel="import" href="../shared/helpers.html">
+    <script src="../../../web-component-tester/browser.js"></script>
+    <script src='eventsSpecs.js'></script>
+    <!-- Step 1: import the element to test -->
+    <link rel="import" href="../../palindrom-connection.html">
+</head>
+
+<body>
+    <palindrom-connection remote-url="/palindrom" ping-interval-s="0"></palindrom-connection>
+    <script>
+        addEventListener('WebComponentsReady', () => {
+            var palindromConnection = document.querySelector('palindrom-connection');
+            var model = {
+                name: 'Juicy'
+            };
+            var currentObject;
+            var stateResetListener = sinon.spy();
+            var palindrom = palindromConnection.palindrom;
+
+            describe('state-reset event - event on self', function () {
+                it('fire a state-reset event in the beginning', function () {
+                    palindromConnection.addEventListener('state-reset', stateResetListener);
+                    initPalindrom(palindrom, model);
+                    expect(stateResetListener).to.have.been.called;
+                    expect(stateResetListener.getCall(0).args[0].detail).to.deep.equal(model);
+                    currentObject = stateResetListener.getCall(0).args[0].detail;
+                });
+                it('fire a state-reset event when a root patch arrives', function () {
+                    palindromChange(palindrom, [operationObject('replace', '', model)]);
+                    expect(stateResetListener).to.have.been.calledTwice;
+                    expect(stateResetListener.getCall(1).args[0].detail).to.deep.equal(model);
+                    currentObject = stateResetListener.getCall(1).args[0].detail;
+                });
+            });
+            describe('state-reset event - event on window', function () {
+                before(() => {
+                    stateResetListener = sinon.spy();
+                })
+                it('fire a state-reset event in the beginning', function () {
+                    window.addEventListener('state-reset', stateResetListener);
+                    initPalindrom(palindrom, model);
+                    expect(stateResetListener).to.have.been.called;
+                    expect(stateResetListener.getCall(0).args[0].detail).to.deep.equal(model);
+                    currentObject = stateResetListener.getCall(0).args[0].detail;
+                });
+                it('fire a state-reset event when a root patch arrives', function () {
+                    palindromChange(palindrom, [operationObject('replace', '', model)]);
+                    expect(stateResetListener).to.have.been.calledTwice;
+                    expect(stateResetListener.getCall(1).args[0].detail).to.deep.equal(model);
+                    currentObject = stateResetListener.getCall(1).args[0].detail;
+                });
+            });
+        });
+    </script>
+
+</body>
+
+</html>
