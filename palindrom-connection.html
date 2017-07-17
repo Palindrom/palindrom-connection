@@ -59,17 +59,6 @@
             this.root.appendChild(clone);
 
             this.reconnectionBox = this.root.querySelector('#reconnection-box');
-
-            // in case of having two Palindrom apps blended in the same page, events will collide, a prefix might be needed
-
-            this.eventPrefix = this.getAttribute('event-prefix') || '';            
-            if (!this.eventPrefix) {
-                const count = document.getElementsByTagName('palindrom-connection').length;
-                // there is another instance of `palindrom-connection`
-                if (count > 1) {
-                    console.warn('It seems like you have more than one <palindrom-connection/> instance in your document. This could lead to events collision without event-prefix attribute, please prefix your event-names by setting `event-prefix` attribute, eg: `<palindrom-connection event-prefix="your-custom-prefix" />` and use the same prefix when subscribing to the events');
-                }
-            }
             this.remoteUrl = this.getAttribute('remote-url');
             this.useWebSocket = this.getAttribute('use-websocket') !== 'false';
             this.debug = !!this.getAttribute('debug');
@@ -118,7 +107,7 @@
             window.location.reload();
         }
         onStateReset(newState) {
-            this.dispatchEvent(new CustomEvent(this.eventPrefix + "state-reset", {
+            this.dispatchEvent(new CustomEvent("state-reset", {
                 bubbles: true,
                 cancelable: true,
                 detail: newState
@@ -126,14 +115,14 @@
             this.obj = newState;
         }
         onLocalChange(patch) {
-            this.dispatchEvent(new CustomEvent(this.eventPrefix + "local-change", {
+            this.dispatchEvent(new CustomEvent("local-change", {
                 bubbles: true,
                 cancelable: true,
                 detail: patch
             }));
         }
         onPatchReceived(data, url, method) {
-            this.dispatchEvent(new CustomEvent(this.eventPrefix + "patch-received", {
+            this.dispatchEvent(new CustomEvent("patch-received", {
                 bubbles: true,
                 cancelable: true,
                 detail: data
@@ -145,7 +134,7 @@
                 url: url,
                 method: method
             }
-            this.dispatchEvent(new CustomEvent(this.eventPrefix + "patch-sent", {
+            this.dispatchEvent(new CustomEvent("patch-sent", {
                 bubbles: true,
                 cancelable: true,
                 detail
@@ -159,7 +148,7 @@
                 statusCode: code,
                 reason: reason
             };
-            this.dispatchEvent(new CustomEvent(this.eventPrefix + "socket-state-changed", {
+            this.dispatchEvent(new CustomEvent("socket-state-changed", {
                 bubbles: true,
                 cancelable: true,
                 detail
@@ -173,7 +162,7 @@
                 handled: false
             };
 
-            this.dispatchEvent(new CustomEvent(this.eventPrefix + "reconnection-countdown", {
+            this.dispatchEvent(new CustomEvent("reconnection-countdown", {
                 bubbles: true,
                 cancelable: true,
                 detail
@@ -215,7 +204,7 @@
                 milliseconds,
                 handled: false
             };
-            this.dispatchEvent(new CustomEvent(this.eventPrefix + "reconnection-countdown", {
+            this.dispatchEvent(new CustomEvent("reconnection-countdown", {
                 bubbles: true,
                 cancelable: true,
                 detail
@@ -249,7 +238,7 @@
             const detail = {
                 handled: false
             };
-            this.dispatchEvent(new CustomEvent(this.eventPrefix + "reconnection-end", {
+            this.dispatchEvent(new CustomEvent("reconnection-end", {
                 bubbles: true,
                 cancelable: true,
                 detail
@@ -259,7 +248,7 @@
             }
         }
         onPatchApplied(patch, results) {
-            this.dispatchEvent(new CustomEvent(this.eventPrefix + "patch-applied", {
+            this.dispatchEvent(new CustomEvent("patch-applied", {
                 bubbles: true,
                 cancelable: true,
                 detail: { patch, results }

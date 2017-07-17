@@ -2,7 +2,7 @@
   "name": "palindrom-connection",
   "version": "0.0.0",
   "description": "Initiates a Palindrom connection a offers a DOM interface to access the connection via DOM events.",
-  "private": true,
+  "private": false,
   "authors": [
     "Omar Alshaker",
     "Tomek Wytrębowicz"

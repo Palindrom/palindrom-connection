@@ -1,8 +1,5 @@
 /* a DRY way to run same specs with different args */
-function runSpecsByTarget(palindromConnection, target, eventPrefix) {
-  if (!eventPrefix) {
-    eventPrefix = '';
-  }
+function runSpecsByTarget(palindromConnection, target) {
   var model = {
     name: 'Juicy'
   };
@@ -19,9 +16,9 @@ function runSpecsByTarget(palindromConnection, target, eventPrefix) {
     });
 
     describe('patch-received event', function() {
-      it(`fire ${eventPrefix}patch-received when a patch is received`, function() {
+      it(`fire patch-received when a patch is received`, function() {
         const patchReceivedListener = sinon.spy();
-        target.addEventListener(eventPrefix + 'patch-received', patchReceivedListener);
+        target.addEventListener('patch-received', patchReceivedListener);
 
         palindromChange(palindrom, [
           operationObject('replace', '/name', 'Frédéric')
@@ -37,9 +34,9 @@ function runSpecsByTarget(palindromConnection, target, eventPrefix) {
       });
     });
     describe('patch-applied event', function() {
-      it(`fire ${eventPrefix}patchApplied when a patch is applied`, function() {
+      it(`fire patchApplied when a patch is applied`, function() {
         const patchAppliedListener = sinon.spy();
-        target.addEventListener(eventPrefix + 'patch-applied', patchAppliedListener);
+        target.addEventListener('patch-applied', patchAppliedListener);
 
         palindromChange(palindrom, [
           operationObject('replace', '/name', 'Chopin')
@@ -57,10 +54,10 @@ function runSpecsByTarget(palindromConnection, target, eventPrefix) {
         expect(results[0].removed).to.equal('Frédéric');
       });
     });
-    describe(`${eventPrefix}patch-sent event`, function() {
+    describe(`patch-sent event`, function() {
       it('fire patch-sent when a patch is issued', function() {
         const patchSentListener = sinon.spy();
-        target.addEventListener(eventPrefix + 'patch-sent', patchSentListener);
+        target.addEventListener('patch-sent', patchSentListener);
 
         currentObject.name = 'Arnold';
 
@@ -71,10 +68,10 @@ function runSpecsByTarget(palindromConnection, target, eventPrefix) {
         );
       });
     });
-    describe(`${eventPrefix}local-change event`, function() {
+    describe(`local-change event`, function() {
       it('fire patch-sent when a patch is issued', function() {
         const localChangeListener = sinon.spy();
-        target.addEventListener(eventPrefix + 'local-change', localChangeListener);
+        target.addEventListener('local-change', localChangeListener);
 
         currentObject.name = 'Amy';
 
