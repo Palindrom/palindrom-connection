@@ -71,8 +71,6 @@
             this.palindromObj = {};
             this.path = this.getAttribute('path') || '/';
 
-            const whereToBind = this.getAttribute("ref");
-
             if (this.listenTo) {
                 this.listenTo = typeof listenTo == "string" ? document.getElementById(listenTo) : listenTo;
             }
